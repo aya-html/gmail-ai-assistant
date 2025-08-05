@@ -33,6 +33,7 @@ bash
 Copy
 Edit
 gmail_ai_assistant/
+
 ├── assistant.py        # Core AI assistant logic (Gmail → AI → Notion)
 ├── main.py             # Flask app with dashboard & API endpoints
 ├── requirements.txt    # Python dependencies
