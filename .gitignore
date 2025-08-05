@@ -1,0 +1,106 @@
+# ==============================
+# 🚫 SENSITIVE & LOCAL SECRETS
+# ==============================
+.env
+.env.*
+*.env
+*.json
+token_*.pkl
+*credentials*.json
+service_account*.json
+secret_*.txt
+api_keys.txt
+
+# ==============================
+# 🐍 PYTHON BUILD / CACHE FILES
+# ==============================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+.eggs/
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+pip-wheel-metadata/
+share/python-wheels/
+wheels/
+
+# ==============================
+# 📦 VIRTUAL ENVIRONMENTS
+# ==============================
+venv/
+.venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# ==============================
+# 🗂 LOGS & RUNTIME FILES
+# ==============================
+*.log
+logs/
+*.pid
+*.seed
+*.dat
+*.db
+*.sqlite
+instance/
+*.gz
+*.out
+
+# ==============================
+# ⚙️ IDE / EDITOR SETTINGS
+# ==============================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ==============================
+# 🖥 OS-SPECIFIC FILES
+# ==============================
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+desktop.ini
+
+# ==============================
+# 🐳 DOCKER
+# ==============================
+*.tar
+docker-compose.override.yml
+.docker/
+**/docker-cache/
+
+# ==============================
+# 📓 JUPYTER NOTEBOOKS / TEMP
+# ==============================
+*.ipynb_checkpoints
+.ipynb_checkpoints/
+*.tmp
+tmp/
+temp/
+cache/
+sandbox/
+scratch/
+
+# ==============================
+# 🧪 TEST / COVERAGE FILES
+# ==============================
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
