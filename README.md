@@ -29,9 +29,7 @@ Designed for internal enterprise automation today, with a roadmap toward SaaS sc
 🔒 Enterprise‑Grade Security — All secrets stored in .env, fully excluded from GitHub via .gitignore
 
 🗂 Project Structure
-bash
-Copy
-Edit
+
 gmail_ai_assistant/
 
 ├── assistant.py        # Core AI assistant logic (Gmail → AI → Notion)
