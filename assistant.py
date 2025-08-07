@@ -64,19 +64,7 @@ credentials = service_account.Credentials.from_service_account_file(
 # Then build Gmail client
 gmail = build("gmail", "v1", credentials=credentials)
 
-    DELEGATED_USER_EMAIL = os.getenv("DELEGATED_USER_EMAIL", "aya@fitgroup.cc")
-
-    if not OPENAI_API_KEY or not NOTION_TOKEN or not NOTION_DB_ID:
-        raise ValueError(
-            "❌ Missing critical environment variables for enterprise operations: "
-            "OPENAI_API_KEY, NOTION_TOKEN, NOTION_DB_ID"
-        )
-
-    print(f"🏢 FIT Group Gmail Assistant - Enterprise Edition")
-    print(f"👤 Processing emails for: {DELEGATED_USER_EMAIL}")
-    print(f"🤖 AI-powered executive email management system initializing...")
-
-    # === Configure OpenAI client (Enterprise Grade) ===
+# === Configure OpenAI client (Enterprise Grade) ===
     try:
         from openai import OpenAI
         
