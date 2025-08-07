@@ -382,7 +382,7 @@ HTML_TEMPLATE = '''
     <div class="container">
         <div class="header">
             <h1>📧 Gmail Assistant</h1>
-            <p>AI-powered email processing with Notion integration</p>
+            <p>Next‑gen AI Gmail Assistant for enterprises</p>
         </div>
         
         <div class="content">
@@ -428,7 +428,7 @@ HTML_TEMPLATE = '''
         </div>
         
         <div class="footer">
-            <p>Gmail Assistant API v1.0.0 • Powered by OpenAI & Notion</p>
+            <p>Gmail Assistant v1.0.0 • FIT Group 📍 Global AI Systems Innovator</p>
             <div class="api-links">
                 <a href="/api/info" class="api-link">📋 API Info</a>
                 <a href="/health" class="api-link">💓 Health Check</a>
@@ -693,3 +693,4 @@ if __name__ == '__main__':
         debug=os.environ.get('FLASK_ENV') == 'development'  # Debug mode only in development
     )
     
+
