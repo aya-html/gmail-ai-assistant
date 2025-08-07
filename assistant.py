@@ -27,6 +27,43 @@ def run_assistant():
     NOTION_DB_ID = os.getenv("NOTION_DB_ID")
     
     # Get the target user email for delegation (with fallback)
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+
+SCOPES = [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.modify",
+    "https://www.googleapis.com/auth/gmail.labels",
+]
+
+SERVICE_ACCOUNT_FILE = "path/to/service_account_key.json"  # ❗only for local testing — see note below
+IMPERSONATED_USER = "aya@fitgroup.cc"
+
+# For local testing with JSON
+# credentials = service_account.Credentials.from_service_account_file(
+#     SERVICE_ACCOUNT_FILE, scopes=SCOPES
+# )
+
+# ✅ For production on Cloud Run using ADC + DWDA
+credentials = service_account.IDTokenCredentials.from_service_account_info(
+    info={},  # ← doesn’t work here; so do this instead:
+    target_audience="",
+)
+
+# ❗✅ Proper DWDA pattern on Cloud Run:
+credentials = service_account.Credentials.from_service_account_info(
+    info=os.environ["GOOGLE_SERVICE_ACCOUNT_INFO"],  # if you're injecting JSON string into env
+    scopes=SCOPES
+).with_subject(IMPERSONATED_USER)
+
+# If you're using built-in ADC inside Cloud Run and have DWDA authorized
+credentials = service_account.Credentials.from_service_account_file(
+    "/etc/secrets/service-account.json", scopes=SCOPES
+).with_subject(IMPERSONATED_USER)
+
+# Then build Gmail client
+gmail = build("gmail", "v1", credentials=credentials)
+
     DELEGATED_USER_EMAIL = os.getenv("DELEGATED_USER_EMAIL", "aya@fitgroup.cc")
 
     if not OPENAI_API_KEY or not NOTION_TOKEN or not NOTION_DB_ID:
