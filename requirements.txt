@@ -3,5 +3,5 @@ google-api-python-client==2.125.0
 google-auth==2.29.0
 google-auth-oauthlib==1.2.0
 python-dotenv==1.0.1
-openai==1.14.3
+openai>=1.13.3
 notion-client==2.2.1
