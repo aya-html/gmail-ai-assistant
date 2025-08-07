@@ -6,9 +6,9 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - build
-      - --tag=gcr.io/$gmail-ai-assistant-463814/gmail-ai-assistant
+      - --tag=gcr.io/$PROJECT_ID/gmail-ai-assistant
       - .
 
 # Push the image (Cloud Run will pull it automatically)
 images:
-  - gcr.io/$gmail-ai-assistant-463814/gmail-ai-assistant
+  - gcr.io/$PROJECT_ID/gmail-ai-assistant
