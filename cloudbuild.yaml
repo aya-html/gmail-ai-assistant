@@ -1,0 +1,14 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - --tag=gcr.io/$gmail-ai-assistant-463814/gmail-ai-assistant
+      - .
+
+# Push the image (Cloud Run will pull it automatically)
+images:
+  - gcr.io/$gmail-ai-assistant-463814/gmail-ai-assistant
