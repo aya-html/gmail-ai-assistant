@@ -14,6 +14,8 @@ def run_assistant():
     import os
     import sys
     import google.auth
+    from google.auth import impersonated_credentials
+    from google.oauth2 import service_account
     from googleapiclient.discovery import build
     from base64 import urlsafe_b64decode
     from datetime import datetime, timedelta
@@ -27,44 +29,22 @@ def run_assistant():
     NOTION_DB_ID = os.getenv("NOTION_DB_ID")
     
     # Get the target user email for delegation (with fallback)
-    from google.oauth2 import service_account
-    from googleapiclient.discovery import build
+    DELEGATED_USER_EMAIL = os.getenv("DELEGATED_USER_EMAIL", "aya@fitgroup.cc")
+    
+    # Service Account Email (required for DWDA)
+    SERVICE_ACCOUNT_EMAIL = os.getenv("SERVICE_ACCOUNT_EMAIL", "gmail-assistant@your-project-id.iam.gserviceaccount.com")
 
-SCOPES = [
-    "https://www.googleapis.com/auth/gmail.readonly",
-    "https://www.googleapis.com/auth/gmail.modify",
-    "https://www.googleapis.com/auth/gmail.labels",
-]
+    if not OPENAI_API_KEY or not NOTION_TOKEN or not NOTION_DB_ID:
+        raise ValueError(
+            "❌ Missing critical environment variables for enterprise operations: "
+            "OPENAI_API_KEY, NOTION_TOKEN, NOTION_DB_ID"
+        )
 
-SERVICE_ACCOUNT_FILE = "path/to/service_account_key.json"  # ❗only for local testing — see note below
-IMPERSONATED_USER = "aya@fitgroup.cc"
+    print(f"🏢 FIT Group Gmail Assistant - Enterprise Edition")
+    print(f"👤 Processing emails for: {DELEGATED_USER_EMAIL}")
+    print(f"🤖 AI-powered executive email management system initializing...")
 
-# For local testing with JSON
-# credentials = service_account.Credentials.from_service_account_file(
-#     SERVICE_ACCOUNT_FILE, scopes=SCOPES
-# )
-
-# ✅ For production on Cloud Run using ADC + DWDA
-credentials = service_account.IDTokenCredentials.from_service_account_info(
-    info={},  # ← doesn’t work here; so do this instead:
-    target_audience="",
-)
-
-# ❗✅ Proper DWDA pattern on Cloud Run:
-credentials = service_account.Credentials.from_service_account_info(
-    info=os.environ["GOOGLE_SERVICE_ACCOUNT_INFO"],  # if you're injecting JSON string into env
-    scopes=SCOPES
-).with_subject(IMPERSONATED_USER)
-
-# If you're using built-in ADC inside Cloud Run and have DWDA authorized
-credentials = service_account.Credentials.from_service_account_file(
-    "/etc/secrets/service-account.json", scopes=SCOPES
-).with_subject(IMPERSONATED_USER)
-
-# Then build Gmail client
-gmail = build("gmail", "v1", credentials=credentials)
-
-# === Configure OpenAI client (Enterprise Grade) ===
+    # === Configure OpenAI client (Enterprise Grade) ===
     try:
         from openai import OpenAI
         
@@ -83,22 +63,65 @@ gmail = build("gmail", "v1", credentials=credentials)
         print(f"❌ Enterprise AI system initialization failed: {str(e)}")
         raise ValueError(f"Failed to initialize enterprise OpenAI client: {str(e)}")
 
-    # === Gmail API Setup with Domain-Wide Delegation ===
+    # === Gmail API Setup with Domain-Wide Delegation (FIXED) ===
     try:
         SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
         
-        # Get service account credentials
-        credentials, project_id = google.auth.default(scopes=SCOPES)
+        # Get default credentials (from Cloud Run environment)
+        source_credentials, project_id = google.auth.default()
         
-        # ⭐ KEY CHANGE: Delegate to actual active user
-        delegated_credentials = credentials.with_subject(DELEGATED_USER_EMAIL)
+        print(f"🔒 Source credentials type: {type(source_credentials).__name__}")
+        print(f"🔒 Project ID: {project_id}")
+        
+        # ⭐ FIXED: Use impersonated_credentials for DWDA
+        try:
+            # Method 1: Direct impersonation if we have service account email
+            if hasattr(source_credentials, 'service_account_email'):
+                service_account_email = source_credentials.service_account_email
+            else:
+                service_account_email = SERVICE_ACCOUNT_EMAIL
+                
+            print(f"🔧 Using service account: {service_account_email}")
+            
+            # Create impersonated credentials for domain-wide delegation
+            delegated_credentials = impersonated_credentials.Credentials(
+                source_credentials=source_credentials,
+                target_principal=service_account_email,
+                target_scopes=SCOPES,
+                delegates=[],
+                subject=DELEGATED_USER_EMAIL  # ⭐ This is the key for DWDA
+            )
+            
+            print(f"✅ Impersonated credentials created for: {DELEGATED_USER_EMAIL}")
+            
+        except Exception as imp_error:
+            print(f"⚠️ Impersonation method failed: {str(imp_error)}")
+            
+            # Method 2: Fallback - try direct delegation if credentials support it
+            try:
+                if hasattr(source_credentials, 'with_subject'):
+                    delegated_credentials = source_credentials.with_subject(DELEGATED_USER_EMAIL)
+                    print(f"✅ Direct delegation successful for: {DELEGATED_USER_EMAIL}")
+                else:
+                    raise ValueError("Credentials don't support domain-wide delegation")
+                    
+            except Exception as fallback_error:
+                print(f"❌ Both delegation methods failed")
+                print(f"   Impersonation error: {str(imp_error)}")
+                print(f"   Direct delegation error: {str(fallback_error)}")
+                raise ValueError(
+                    f"Cannot establish domain-wide delegation. "
+                    f"Please ensure:\n"
+                    f"1. Service account {SERVICE_ACCOUNT_EMAIL} exists\n"
+                    f"2. Domain-wide delegation is configured in Google Workspace\n"
+                    f"3. Cloud Run has proper IAM permissions for impersonation"
+                )
         
         # Build Gmail service with delegated credentials
         service = build("gmail", "v1", credentials=delegated_credentials)
         
         print(f"✅ Domain-Wide Delegation authenticated successfully")
         print(f"📧 Connected to Gmail for: {DELEGATED_USER_EMAIL}")
-        print(f"🔒 Service Account Project: {project_id}")
         
         # Test the connection by getting profile info
         try:
@@ -164,7 +187,7 @@ gmail = build("gmail", "v1", credentials=credentials)
             
         prompt = f"""As an expert linguist for international business communications, identify the primary language of this email content. 
         
-Consider business context and cultural nuances. Reply with only the language name (e.g., "English", "Japanese", "Spanish", "Arabic", "Frensh", "Chinese").
+Consider business context and cultural nuances. Reply with only the language name (e.g., "English", "Japanese", "Spanish", "Arabic", "French", "Chinese").
 
 Email excerpt: {text[:500]}"""
         
@@ -386,7 +409,7 @@ BUSINESS TONE ASSESSMENT:"""
             elif cmd in ["vip_client_request", "enterprise_demo", "custom_solution"]:
                 teams.append("Enterprise Sales")
             elif cmd in ["executive_recruitment", "leadership_hiring"]:
-                teams.append("Executive HR")
+                teams.append("Enterprise HR")
             elif cmd in ["legal_inquiry", "contract_negotiation", "compliance_question"]:
                 teams.append("Legal")
             elif cmd in ["technical_partnership", "ai_collaboration", "innovation_project"]:
